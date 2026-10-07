@@ -91,6 +91,7 @@ python3 "$RUNNER" \
   --status-file "$RUN/opencode.status.json" \
   --stdout-file "$RUN/opencode-openai.md" \
   --stderr-file "$RUN/opencode-openai.err" -- \
+  env COPILOT_PROXY_TOKEN="$($HOME/.local/bin/copilot-proxy-token)" \
   opencode run "Follow the attached review prompt." \
     --pure --agent plan \
     -m copilot-proxy-gpt/gpt-5.6-sol-high --variant high \

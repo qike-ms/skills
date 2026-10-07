@@ -79,10 +79,8 @@ python3 "$RUNNER" \
   --name pi-anthropic --timeout-seconds 600 --progress-seconds 120 \
   --status-file "$RUN/pi.status.json" \
   --stdout-file "$RUN/pi-anthropic.md" --stderr-file "$RUN/pi-anthropic.err" -- \
-  env PI_CODING_AGENT_DIR="$HOME/.pi/review-agent" \
-  pi --no-session --no-context-files --no-skills --no-extensions \
-    --no-prompt-templates --tools read,grep,find,ls \
-    --provider amazon-bedrock --model us.anthropic.claude-opus-4-6-v1:high -p \
+  review-pi --no-session --no-context-files --no-skills --no-extensions \
+    --no-prompt-templates --tools read,grep,find,ls -p \
     @"$RUN/prompt.md" "Review the repository at $REPO." &
 pi_pid=$!
 
@@ -91,10 +89,7 @@ python3 "$RUNNER" \
   --status-file "$RUN/opencode.status.json" \
   --stdout-file "$RUN/opencode-openai.md" \
   --stderr-file "$RUN/opencode-openai.err" -- \
-  env COPILOT_PROXY_TOKEN="$($HOME/.local/bin/copilot-proxy-token)" \
-  opencode run "Follow the attached review prompt." \
-    --pure --agent plan \
-    -m copilot-proxy-gpt/gpt-5.6-sol-high --variant high \
+  review-opencode "Follow the attached review prompt." \
     --dir "$REPO" -f "$RUN/prompt.md" </dev/null &
 oc_pid=$!
 

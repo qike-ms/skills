@@ -11,8 +11,8 @@ Review `git diff <fixed-point>...HEAD` with exactly two independent reviewers. B
 
 | Reviewer | Runtime | Model | Reasoning |
 | --- | --- | --- | --- |
-| OpenAI camp | Pi | `openai-codex/gpt-5.6-sol` | `high` |
-| Anthropic camp | OpenCode | `github-copilot/claude-opus-5.5` | `--variant high` |
+| OpenAI camp | OpenCode | `copilot-proxy-gpt/gpt-5.6-sol-high` | `--variant high` |
+| Anthropic camp | Pi | `amazon-bedrock/us.anthropic.claude-opus-4-6-v1` | `high` |
 
 Use fresh sessions and pin every field. Do not use aliases, default or weak models, a third reviewer, or two models from one camp. If either reviewer is unavailable, the review is incomplete.
 
@@ -76,23 +76,24 @@ VALIDATOR="$CODE_REVIEW_DIR/scripts/validate_review_outputs.py"
 test -x "$RUNNER" && test -x "$VALIDATOR"
 
 python3 "$RUNNER" \
-  --name pi-openai --timeout-seconds 600 --progress-seconds 120 \
+  --name pi-anthropic --timeout-seconds 600 --progress-seconds 120 \
   --status-file "$RUN/pi.status.json" \
-  --stdout-file "$RUN/pi-openai.md" --stderr-file "$RUN/pi-openai.err" -- \
+  --stdout-file "$RUN/pi-anthropic.md" --stderr-file "$RUN/pi-anthropic.err" -- \
+  env PI_CODING_AGENT_DIR="$HOME/.pi/review-agent" \
   pi --no-session --no-context-files --no-skills --no-extensions \
     --no-prompt-templates --tools read,grep,find,ls \
-    --provider openai-codex --model gpt-5.6-sol:high -p \
+    --provider amazon-bedrock --model us.anthropic.claude-opus-4-6-v1:high -p \
     @"$RUN/prompt.md" "Review the repository at $REPO." &
 pi_pid=$!
 
 python3 "$RUNNER" \
-  --name opencode-anthropic --timeout-seconds 600 --progress-seconds 120 \
+  --name opencode-openai --timeout-seconds 600 --progress-seconds 120 \
   --status-file "$RUN/opencode.status.json" \
-  --stdout-file "$RUN/opencode-anthropic.md" \
-  --stderr-file "$RUN/opencode-anthropic.err" -- \
+  --stdout-file "$RUN/opencode-openai.md" \
+  --stderr-file "$RUN/opencode-openai.err" -- \
   opencode run "Follow the attached review prompt." \
     --pure --agent plan \
-    -m github-copilot/claude-opus-5.5 --variant high \
+    -m copilot-proxy-gpt/gpt-5.6-sol-high --variant high \
     --dir "$REPO" -f "$RUN/prompt.md" </dev/null &
 oc_pid=$!
 
@@ -102,8 +103,8 @@ wait "$oc_pid"; oc_status=$?
 set -e
 printf 'pi=%s opencode=%s\n' "$pi_status" "$oc_status"
 python3 "$VALIDATOR" --require-verdict APPROVE \
-  --review pi-openai "$RUN/pi.status.json" "$RUN/pi-openai.md" \
-  --review opencode-anthropic "$RUN/opencode.status.json" "$RUN/opencode-anthropic.md"
+  --review pi-anthropic "$RUN/pi.status.json" "$RUN/pi-anthropic.md" \
+  --review opencode-openai "$RUN/opencode.status.json" "$RUN/opencode-openai.md"
 ```
 
 Pi is read-only. OpenCode's plan agent denies edits but can still invoke shell commands. Detect reviewer mutation instead of assuming safety:

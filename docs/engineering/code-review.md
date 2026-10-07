@@ -37,8 +37,8 @@ Both reviewers inspect both axes. The orchestrator then verifies their claims ag
 
 The pair is fixed:
 
-- Pi using `openai-codex/gpt-5.6-sol` with high reasoning.
-- OpenCode using `github-copilot/claude-opus-5.5` with the high variant.
+- OpenCode using `copilot-proxy-gpt/gpt-5.6-sol-high` with the high variant.
+- Isolated Pi using `amazon-bedrock/us.anthropic.claude-opus-4-6-v1` with high reasoning.
 
 Both run in fresh sessions. Pi is read-only. OpenCode's plan agent denies edits, and the skill compares repository HEAD and status before and after to catch shell-based mutation. A missing reviewer is a failed review, not permission to substitute a weaker model, a same-family model, or a third reviewer.
 

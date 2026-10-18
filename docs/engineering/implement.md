@@ -72,12 +72,12 @@ Probably not. The ticket is more likely too big. A run does codebase exploration
 
 **`/implement #2` in a fresh session worked on something completely unrelated.**
 
-The agent resolves `#2` against whatever numbered list it can see. In a fresh session that may be a todo file, a checklist, or another work list rather than the configured tracker. The agent does not stop when the match is uncertain, so the mistake is not obvious until the work has started. Pass the full reference, the issue URL or `owner/repo#2`, and ask it to confirm the title back before it begins.
+The agent resolved `#2` against another numbered list in context, such as a todo file or checklist, rather than the configured tracker. `implement` now fetches a passed reference from the issue tracker and states its title before starting, and asks when the reference is ambiguous. Check that title matches the ticket you meant; passing the issue URL or `owner/repo#2` removes the ambiguity entirely.
 
 ## It's working if
 
 - The session opens by reading the ticket or spec and restating what it will build, rather than asking you what to build.
-- You can see an actual `/tdd` invocation in the trace, not just tests appearing in the diff.
+- You can see an actual `tdd` Skill tool call in the trace, not just tests appearing in the diff.
 - Typechecks and single test files run repeatedly during the run, and the full suite runs once near the end.
 - The run reaches a commit on your current branch without you prompting it to carry on.
 - The diff is one ticket's worth of change: a vertical slice through every layer, not several tickets swept together.

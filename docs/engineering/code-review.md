@@ -1,75 +1,100 @@
 ## What it does
 
-`code-review` reviews the diff between `HEAD` and a fixed point you name. Two independent high-reasoning reviewers inspect the same evidence: Pi with an OpenAI model and OpenCode with an Anthropic model. Both check **Spec** and **Standards and engineering**, so agreement reflects independent reasoning rather than different task assignments.
+`code-review` checks a declared diff against its spec and repository standards.
+A fresh, read-only Pi reviewer uses direct GitHub Copilot GPT-6.1 SOL with high
+reasoning. It does not use OpenCode or silently switch providers or models.
 
-The skill keeps findings evidence-based. Every retained issue needs a location, concrete impact, and a useful fix. Style already enforced by tools, speculative redesigns, pre-existing problems, and generic advice are excluded.
+Every retained finding needs concrete evidence, impact, and a useful fix. Style
+already enforced by tools, speculative redesigns, pre-existing problems, and
+generic advice are excluded.
 
 ## When to reach for it
 
-Type `/code-review`, or the agent reaches for it automatically when you ask to review a branch, PR, work in progress, or changes "since X".
+Type `/code-review`, or the agent reaches for it automatically when you ask to
+review a branch, PR, explicitly scoped work in progress, or changes "since X".
 
 | Situation | Reach for |
 | --- | --- |
 | A diff exists and you want spec plus engineering review | `code-review` |
 | Nothing is written and you want test-first implementation | [tdd](https://aihero.dev/skills-tdd) |
-| A whole spec needs implementing and reviewing | [implement](https://aihero.dev/skills-implement) |
+| A whole spec needs implementing and reviewing | [implement-spec](https://aihero.dev/skills-implement-spec) |
 | The whole codebase needs architectural improvement | [improve-codebase-architecture](https://aihero.dev/skills-improve-codebase-architecture) |
 | A failure needs diagnosis before review | [diagnosing-bugs](https://aihero.dev/skills-diagnosing-bugs) |
 
-You must supply a fixed point such as `main`, a tag, or a commit. The skill verifies that ref and refuses an empty diff before starting reviewers.
-
 ## Prerequisites
 
-The Spec axis needs an originating issue or spec. The skill searches commit references, a path you supply, and matching files under `docs/`, `specs/`, or `.scratch/`. Without a spec it reports the gap rather than inventing requirements.
+Supply a fixed point such as `main`, a tag, or a commit, plus a declared scope.
+The skill resolves its exact revision and refuses a bad ref or empty evidence.
+The reviewer needs existing native GitHub Copilot authentication; credentials are
+never copied into a review directory.
 
-The Standards and engineering axis reads repository instructions and coding standards. Repository rules override generic advice.
+The Spec axis needs an originating issue or spec. The Standards and engineering
+axis uses repository rules and coding standards. Missing context is a visible
+limitation, not permission to invent requirements.
 
 ## The two axes
 
 | Axis | Checks |
 | --- | --- |
 | Spec | Missing or partial requirements, scope creep, wrong behavior, and absent user or error paths |
-| Standards and engineering | Repository rules, correctness, errors, concurrency, data handling, interfaces, compatibility, design patterns, security, performance, and behavioral tests |
+| Standards and engineering | Repository rules, correctness, errors, concurrency, data handling, interfaces, compatibility, design, security, performance, and behavioral tests |
 
-Both reviewers inspect both axes. The orchestrator then verifies their claims against the diff, retains evidence-backed findings from either reviewer, and resolves disagreements explicitly. This is not majority voting.
+One independent reviewer checks both axes. Its claims are then verified against
+source and deterministic evidence. A confident model assertion is not proof.
 
-## The reviewer pair
+## Immutable evidence
 
-The pair is fixed:
+| Target | Evidence |
+| --- | --- |
+| Committed branch or PR | Fixed-point-to-HEAD diff and exact revisions |
+| Explicitly requested work in progress | Declared staged/unstaged patches, included untracked content, and content hashes |
 
-- OpenCode using `copilot-proxy-gpt/gpt-5.6-sol-high` with the high variant.
-- Isolated Pi using `amazon-bedrock/us.anthropic.claude-opus-4-6-v1` with high reasoning.
-
-Both run in fresh sessions. Pi is read-only. OpenCode's plan agent denies edits, and the skill compares repository HEAD and status before and after to catch shell-based mutation. A missing reviewer is a failed review, not permission to substitute a weaker model, a same-family model, or a third reviewer.
+There is no commit-before-review requirement. Unrelated changes stay outside the
+scope, and review preparation must not stash, reset, commit, or clean the checkout.
+The launcher uses the installed Pi SDK, not a reparsed caller CLI. Native and
+project model/settings/system-prompt overrides are ignored. Existing native OAuth
+is read in place; refreshed tokens stay in memory for the bounded run. No
+credential files are copied or written. An explicit `{path, sha256}` manifest
+freezes every input, and snapshot-only tools cannot open undeclared files.
 
 ## Common questions
 
-**Do both reviewers need to approve?**
+**Which model runs the review?**
 
-Yes. Only plain `APPROVE` from both reviewers passes. `APPROVE-WITH-CHANGES`, `REJECT`, or a missing verdict blocks. A finding from one reviewer still matters when its evidence is correct.
+Exactly Pi with direct `github-copilot/gpt-6.1-sol:high`, through `review-pi`.
+An unavailable model or authentication failure blocks the review rather than
+falling back to a proxy, weaker model, or OpenCode.
 
-**Can I trust a finding because both models reported it?**
+**What counts as approval?**
 
-No. Agreement is useful signal, but the orchestrator still checks every material claim against the code and spec.
+Only plain `APPROVE` on the current immutable revision. `APPROVE-WITH-CHANGES`,
+`REJECT`, missing output, timeout, or unverified process cleanup does not pass.
+Fix material issues, rerun relevant checks, and request a fresh review.
 
 **Does it review uncommitted changes?**
 
-Not by default. The standard target is `<fixed-point>...HEAD`. Include staged or working-tree changes only when requested and label them separately.
+Yes, when explicitly scoped and frozen as work-in-progress evidence. It never
+mixes other agents' unrelated edits into the review.
 
 **Will it keep producing endless nits?**
 
-It should not. Findings below 80 confidence, style handled by tools, generic cleanup, and subjective redesigns are excluded. Re-review is for material fixes, not for manufacturing a clean-looking report.
+It should not. Findings below 80 confidence, tool-enforced style, generic cleanup,
+and subjective redesigns are excluded. Re-review is for material fixes.
 
 ## It's working if
 
-- Both pinned model families review the same current diff at high reasoning.
-- Every finding names an axis, severity, confidence, `file:line`, evidence, impact, and fix.
-- The report separates consensus, unique verified findings, and disagreements.
-- Missing specifications or test evidence remain visible as residual risk.
-- The final verdict is approval only after both reviewers approve the current revision.
+- The trace shows Pi, direct GitHub Copilot, GPT-6.1 SOL, and high reasoning.
+- Each finding names an axis, severity, confidence, location, evidence, impact, and fix.
+- The report distinguishes verified findings from rejected claims and missing evidence.
+- Reviews finish under a deadline, with no surviving reviewer or modified input.
+- Approval follows source verification and relevant test evidence, not just exit zero.
 
 ## Where it fits
 
-`code-review` is the review step near the end of the build chain: `grill-with-docs → to-spec → to-tickets → implement → code-review → retro`. It also works as a standalone review for any branch or PR.
+`code-review` closes the build chain: `grill-with-docs → to-spec → to-tickets →
+implement → code-review → retro`. It also works as a standalone branch or PR review.
 
-[implement](https://aihero.dev/skills-implement) calls it after building. [pr](https://aihero.dev/skills-pr) shapes the pull request after review. [retro](https://aihero.dev/skills-retro) turns repeated review failures into better deterministic checks or repository standards. [ask-matt](https://aihero.dev/skills-ask-matt) routes across the full set.
+[implement](https://aihero.dev/skills-implement) calls it after building.
+[pr](https://aihero.dev/skills-pr) shapes the PR body, not the review dispatch.
+[retro](https://aihero.dev/skills-retro) turns repeated failures into better checks.
+[ask-matt](https://aihero.dev/skills-ask-matt) routes across the full set.

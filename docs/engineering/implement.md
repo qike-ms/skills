@@ -62,9 +62,9 @@ Not built in. It commits straight to the current branch. Several people find thi
 
 **`code-review` says it cannot see my changes.**
 
-`code-review` reviews `git diff <fixed-point>...HEAD`, which excludes staged and working-tree changes. `implement` runs it before committing, so unless an interim commit already exists there is nothing in that diff to review. Multiple people have reported this and it is unfixed on both sides. Commit first, then review against the point you branched from.
+For a committed branch, `code-review` uses `git diff <fixed-point>...HEAD`. For the pre-commit implementation review, explicitly scope the work in progress: freeze staged/unstaged patches and included untracked contents with content hashes. There is no need to make a security-unreviewed interim commit just to expose the diff.
 
-Separately, some people do not want the review inside the run at all, because an agent reviewing the code it just wrote is biased toward its own solution. Running [code-review](https://aihero.dev/skills-code-review) in a fresh session against a fixed point is a valid alternative. The same bias is why that skill runs its two axes in separate sub-agents.
+Run [code-review](https://aihero.dev/skills-code-review) through a fresh, read-only Pi reviewer using direct GitHub Copilot GPT-6.1 SOL with high reasoning. It checks both review axes, and material findings still need verification against source.
 
 **One ticket burned 150k tokens. Am I using it wrong?**
 
